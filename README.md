@@ -82,6 +82,79 @@ Open http://localhost:3000. View logs with `docker compose logs -f`; stop the se
 
 The Compose project name is `mytnb-pd`, so its generated images, containers, and network use that prefix regardless of the folder name. The backend persists its database in `backend/data/`; its existing `mytnb.db` filename is retained to avoid switching to a new, empty database. The frontend image points API requests to the Compose backend service.
 
+## Production deployment and CI/CD
+
+The GitHub Actions workflow at `.github/workflows/ci-cd.yml` runs the backend tests, frontend type-check/build, and Docker image builds for pull requests and pushes to `main`. Production deployment is disabled until you explicitly set `ENABLE_PRODUCTION_DEPLOY=true`; once enabled, a push to `main` deploys only after those checks succeed. The deployment job uses SSH to update a single VPS checkout and run `docker compose up -d --build`; it does not publish images or copy runtime credentials through GitHub Actions.
+
+### Prepare a VPS
+
+Use a Malaysia-based VPS so the backend can reach myTNB. Install Docker Engine with the Compose plugin, Git, and `curl`. Configure DNS for your domain and install a TLS reverse proxy such as Caddy on the host. Keep ports 3000 and 8000 bound to localhost as in `docker-compose.yml`; expose only the proxy's HTTPS port to the internet.
+
+Clone the public repository once and configure its runtime files on the server:
+
+```bash
+sudo mkdir -p /opt/mytnb-pd
+sudo chown "$USER":"$USER" /opt/mytnb-pd
+git clone https://github.com/danielpxh/mytnb-pd.git /opt/mytnb-pd
+cd /opt/mytnb-pd
+cp backend/.env.example backend/.env
+```
+
+Edit `backend/.env` on the VPS. Leave `MYTNB_USERNAME` and `MYTNB_PASSWORD` empty if you sign in via the dashboard. For a trusted TLS proxy that overwrites forwarded headers, create a root `.env` beside `docker-compose.yml` containing:
+
+```dotenv
+TRUST_PROXY_HEADERS=true
+```
+
+Do not commit either `.env` file. Start the app once and confirm it is healthy:
+
+```bash
+docker compose up -d --build
+curl -fsS http://127.0.0.1:8000/health
+curl -fsS http://127.0.0.1:3000/
+```
+
+Configure the reverse proxy to forward your domain to `127.0.0.1:3000` and obtain a valid TLS certificate. For example, a host-installed Caddy can use:
+
+```text
+dashboard.example.com {
+    reverse_proxy 127.0.0.1:3000
+}
+```
+
+Replace `dashboard.example.com` with your domain. Ensure the proxy overwrites `X-Forwarded-Proto` and `X-Forwarded-Host`; do not trust forwarded headers from arbitrary clients.
+
+### Enable automatic deployment
+
+In the GitHub repository, create a **production** environment under **Settings → Environments**. Add these environment secrets:
+
+| Secret | Value |
+|---|---|
+| `VPS_HOST` | VPS hostname or IP |
+| `VPS_USER` | A non-root deployment user with permission to run Docker Compose |
+| `VPS_SSH_PRIVATE_KEY` | Private SSH key for that deployment user |
+| `VPS_KNOWN_HOSTS` | Verified `known_hosts` entry for the VPS |
+
+Add this environment variable:
+
+| Variable | Value |
+|---|---|
+| `DEPLOY_PATH` | Absolute repository path on the VPS, such as `/opt/mytnb-pd` |
+
+Under **Settings → Secrets and variables → Actions → Variables**, add the repository variable `ENABLE_PRODUCTION_DEPLOY` with value `true` only after the VPS and production environment are ready. Leave it unset or set it to `false` to run CI without attempting deployment.
+
+Generate a dedicated, non-interactive SSH key on a trusted administrator machine:
+
+```bash
+ssh-keygen -t ed25519 -C mytnb-pd-github-actions -f ./mytnb-pd-deploy -N ""
+```
+
+Add `mytnb-pd-deploy.pub` to the deployment user's `~/.ssh/authorized_keys` on the VPS, and store the contents of `mytnb-pd-deploy` (the private key) only as the GitHub `VPS_SSH_PRIVATE_KEY` environment secret. Never commit or paste the private key into the repository. Protect access to the GitHub production environment because anyone who can use this key can deploy and run Docker on the VPS.
+
+Verify the server's SSH host-key fingerprint using your VPS provider's trusted console before adding its `known_hosts` entry. Do not disable SSH host-key checking or add `ssh-keyscan` output without independently verifying the fingerprint. The deployment user must be able to `git pull` the public repository and run `docker compose` without interactive prompts. Membership in the Docker group grants root-equivalent control of the VPS, so use this account only for trusted deployments. For safer production releases, enable required reviewers on the `production` environment and protect `main` with pull requests and passing CI checks.
+
+After configuration and enabling the repository variable, pushes to `main` deploy automatically. You can also run the workflow manually from **Actions → CI/CD → Run workflow** on `main`. Pull requests run validation and image builds only; they never deploy. Deployment rebuilds the images on the VPS and checks the frontend and backend health endpoints. Sessions are held in backend memory, so a deployment that restarts the backend signs active users out; SQLite data remains in `backend/data/`.
+
 ## Important: Malaysian IP Required
 
 The myTNB API (`api.mytnb.com.my`) only accepts connections from Malaysian IP addresses. Run this app on:
