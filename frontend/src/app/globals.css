@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes loading {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+@layer base {
+  :root {
+    --background: 248 250 252;
+    --foreground: 15 23 42;
+  }
+
+  * {
+    @apply border-slate-200;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+.recharts-brush {
+  touch-action: pan-y;
+}
+
+.recharts-brush-texts {
+  display: none;
+}
+
+.recharts-brush-slide {
+  cursor: grab;
+}
+
+.recharts-brush-slide:active {
+  cursor: grabbing;
+}
+
+.recharts-brush-traveller {
+  cursor: ew-resize;
+}
+
+.recharts-brush-traveller rect {
+  fill: #3b82f6;
+  fill-opacity: 0.18;
+  rx: 4px;
+  stroke: #1d4ed8;
+  stroke-width: 1.5px;
+}
+
+.recharts-brush-traveller:hover rect,
+.recharts-brush-traveller:active rect {
+  fill-opacity: 0.35;
+  stroke: #1e40af;
+  stroke-width: 2px;
+}
+
+html.dark body {
+  background-color: #020617;
+  color: #f1f5f9;
+}
+
+html.dark .bg-white {
+  background-color: #0f172a;
+}
+
+html.dark .bg-slate-50 {
+  background-color: #1e293b;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #334155;
+}
+
+html.dark .bg-brand-50 {
+  background-color: #172554;
+}
+
+html.dark .bg-amber-50 {
+  background-color: #451a03;
+}
+
+html.dark .bg-green-50 {
+  background-color: #052e16;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+  color: #e2e8f0;
+}
+
+html.dark .text-slate-600 {
+  color: #cbd5e1;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #94a3b8;
+}
+
+html.dark .text-brand-700 {
+  color: #93c5fd;
+}
+
+html.dark .text-amber-700 {
+  color: #fcd34d;
+}
+
+html.dark .text-amber-800 {
+  color: #fde68a;
+}
+
+html.dark .text-green-700 {
+  color: #86efac;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200 {
+  border-color: #334155;
+}
+
+html.dark .border-amber-200 {
+  border-color: #92400e;
+}
+
+html.dark .hover\:bg-slate-50:hover {
+  background-color: #1e293b;
+}
+
+html.dark .hover\:bg-slate-100:hover,
+html.dark .hover\:bg-slate-200:hover {
+  background-color: #334155;
+}
+
+html.dark .hover\:text-slate-900:hover {
+  color: #f8fafc;
+}
+
+html.dark input,
+html.dark select {
+  color: #e2e8f0;
+  background-color: #0f172a;
+  border-color: #475569;
+}
+
+html.dark input::placeholder {
+  color: #64748b;
+}

@@ -1,0 +1,28 @@
+name: mytnb-pd
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/data/mytnb.db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-false}
+    depends_on:
+      - backend
+    restart: unless-stopped

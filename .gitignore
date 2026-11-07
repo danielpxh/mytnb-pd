@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.venv/
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+frontend/.env.local
+frontend/node_modules/
+frontend/.next/
+frontend/.next-dev/
