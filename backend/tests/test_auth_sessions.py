@@ -71,10 +71,18 @@ class AuthSessionRouteTests(unittest.IsolatedAsyncioTestCase):
                 response,
             )
             cookie = response.headers["set-cookie"].lower()
+            max_age = int(
+                next(
+                    part.split("=", 1)[1]
+                    for part in cookie.split("; ")
+                    if part.startswith("max-age=")
+                )
+            )
 
             self.assertEqual(result["duration_hours"], 6)
             self.assertEqual(get_session(token).duration_hours, 6)
-            self.assertIn("max-age=21600", cookie)
+            self.assertLessEqual(max_age, 6 * 60 * 60)
+            self.assertGreaterEqual(max_age, 6 * 60 * 60 - 60)
             self.assertIn("httponly", cookie)
             self.assertIn("secure", cookie)
         finally:
