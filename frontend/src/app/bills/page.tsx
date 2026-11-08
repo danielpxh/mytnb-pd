@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useMonthlyBills } from "@/hooks/useUsage";
 import { BillsTable } from "@/components/dashboard/BillsTable";
@@ -61,10 +62,19 @@ export default function BillsPage() {
       )}
       {selectedAccount && !selectedAccount.is_smart_meter && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          myTNB currently identifies this account as a Standard Meter. Its
-          returned bill history does not include kWh usage. If this account has
-          a smart meter, refresh account discovery and check its meter
-          classification in myTNB.
+          {selectedAccount.is_tagged_smr === null
+            ? selectedAccount.eligibility_checked_at
+              ? "The account list currently says Standard Meter, and myTNB returned no SMR status for this account."
+              : "The account list currently says Standard Meter, but the SMR status has not been checked."
+            : "The myTNB SMR status check does not tag this account as a Smart Meter."}{" "}
+          Standard-meter bill history may not include kWh usage.{" "}
+          <Link
+            href="/settings#accounts"
+            className="font-medium underline"
+          >
+            Check meter status in Settings
+          </Link>
+          .
         </div>
       )}
 

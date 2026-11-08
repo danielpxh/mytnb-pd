@@ -4,6 +4,7 @@ export interface Account {
   nickname: string;
   tariff_type: string;
   is_smart_meter: boolean;
+  account_list_is_smart_meter: boolean;
   last_synced: string | null;
   smr_eligibility: string | null;
   is_tagged_smr: boolean | null;

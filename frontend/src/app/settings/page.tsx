@@ -165,7 +165,10 @@ export default function SettingsPage() {
 
       {/* Account list */}
       {accounts.length > 0 && (
-        <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+        <section
+          id="accounts"
+          className="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 space-y-4"
+        >
           <h2 className="font-semibold text-slate-800">Your Accounts</h2>
           <div className="space-y-3">
             {accounts.map((a) => (
@@ -187,13 +190,53 @@ export default function SettingsPage() {
                     </p>
                   )}
                   <p className="text-xs text-slate-400">
-                    {a.account_number} ·{" "}
-                    {a.is_smart_meter ? (
-                      <span className="text-green-600">Smart Meter</span>
-                    ) : (
-                      "Standard Meter"
-                    )}
+                    {a.account_number}
                   </p>
+                  <div className="mt-2 space-y-1 text-xs text-slate-600">
+                    <p>
+                      Dashboard meter status:{" "}
+                      <span
+                        className={
+                          a.is_smart_meter
+                            ? "font-medium text-green-700"
+                            : "font-medium text-slate-700"
+                        }
+                      >
+                        {a.is_smart_meter ? "Smart Meter" : "Standard Meter"}
+                      </span>
+                      {a.is_tagged_smr !== null
+                        ? " (using SMR status)"
+                        : " (from account list)"}
+                    </p>
+                    <p>
+                      myTNB account list:{" "}
+                      {a.account_list_is_smart_meter
+                        ? "Smart Meter"
+                        : "Standard Meter"}
+                    </p>
+                    <p>
+                      myTNB SMR status:{" "}
+                      {a.is_tagged_smr === null
+                        ? a.eligibility_checked_at
+                          ? "No status returned"
+                          : "Not checked"
+                        : a.is_tagged_smr
+                          ? "Tagged as a Smart Meter"
+                          : "Not tagged as a Smart Meter"}
+                      {a.eligibility_checked_at &&
+                        ` - checked ${new Date(
+                          a.eligibility_checked_at,
+                        ).toLocaleString()}`}
+                    </p>
+                    {a.is_tagged_smr !== null &&
+                      a.is_tagged_smr !== a.account_list_is_smart_meter && (
+                        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800">
+                          myTNB's account list and SMR status disagree. The
+                          dashboard uses the SMR status for its meter badge
+                          and usage sync.
+                        </p>
+                      )}
+                  </div>
                   {a.last_synced && (
                     <p className="text-xs text-slate-400">
                       Last synced: {new Date(a.last_synced).toLocaleString()}
@@ -260,7 +303,9 @@ export default function SettingsPage() {
                     className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50 transition-colors"
                   >
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    {checkEligibility.isPending ? "Checking…" : "Check eligibility"}
+                    {checkEligibility.isPending
+                      ? "Checking…"
+                      : "Refresh SMR & eligibility"}
                   </button>
                   <button
                     onClick={() => sync.mutate(a.account_number)}

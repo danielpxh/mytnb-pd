@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useDailyUsage } from "@/hooks/useUsage";
 import { DailyChart } from "@/components/dashboard/DailyChart";
@@ -96,7 +97,24 @@ export default function UsagePage() {
         ) : (
           <div className="h-64 flex items-center justify-center text-sm text-slate-400">
             {selectedAccount && !selectedAccount.is_smart_meter
-              ? "myTNB identifies this as a Standard Meter. This dashboard currently fetches daily kWh through python-mytnb's smart-meter usage call, while standard-meter bill history contains no kWh. This chart cannot show measured usage for this account."
+              ? (
+                  <span className="max-w-xl text-center">
+                    {selectedAccount.is_tagged_smr === null
+                      ? selectedAccount.eligibility_checked_at
+                        ? "The account list says Standard Meter, and myTNB returned no SMR status for this account."
+                        : "The account list says Standard Meter, but the SMR status has not been checked."
+                      : "The myTNB SMR status check does not tag this account as a Smart Meter."}{" "}
+                    Daily kWh comes from the smart-meter usage endpoint, so it
+                    cannot show readings until myTNB returns them.{" "}
+                    <Link
+                      href="/settings#accounts"
+                      className="font-medium text-brand-700 underline"
+                    >
+                      Check meter status in Settings
+                    </Link>
+                    .
+                  </span>
+                )
               : "No daily readings are stored yet. Sync this account to fetch available smart-meter history."}
           </div>
         )}

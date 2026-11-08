@@ -190,6 +190,48 @@ class SyncServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(bill.due_date, date(2026, 11, 20))
         self.assertTrue(bill.usage_available)
 
+    async def test_smr_tag_allows_usage_sync_when_account_list_flag_is_false(self):
+        account = SimpleNamespace(
+            account_number="220000000005",
+            is_smart_meter=False,
+            rate_category="Domestic",
+            is_paid="false",
+        )
+        daily = SimpleNamespace(
+            year="2026",
+            month="11",
+            day="5",
+            consumption_kwh=6.4,
+            amount_rm=3.2,
+        )
+        client = FakeClient(
+            account,
+            usage=SimpleNamespace(
+                by_day=[SimpleNamespace(days=[daily])],
+                by_month=SimpleNamespace(months=[]),
+            ),
+        )
+        self.session.add(
+            Account(
+                account_number=account.account_number,
+                owner_email="owner@example.com",
+                is_smart_meter=False,
+                is_tagged_smr=True,
+            )
+        )
+        await self.session.commit()
+
+        await self.sync_with_client(
+            client,
+            MyTnbCredentials("owner@example.com", "not-persisted"),
+        )
+
+        daily_row = (await self.session.exec(select(DailyUsage))).one()
+        stored_account = (await self.session.exec(select(Account))).one()
+        self.assertEqual(daily_row.usage_kwh, 6.4)
+        self.assertFalse(stored_account.is_smart_meter)
+        self.assertTrue(stored_account.is_tagged_smr)
+
     async def test_sync_rejects_an_account_owned_by_another_profile(self):
         account = SimpleNamespace(
             account_number="220000000004",

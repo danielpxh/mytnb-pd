@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Zap, DollarSign, Calendar, Activity } from "lucide-react";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useUsageSummary, useDailyUsage, useMonthlyBills } from "@/hooks/useUsage";
@@ -144,9 +145,25 @@ export default function OverviewPage() {
         ) : (
           <div className="rounded-xl border border-dashed border-slate-200 bg-white p-5 flex items-center justify-center min-h-[200px]">
             <p className="text-sm text-slate-400">
-              {selectedAccount && !selectedAccount.is_smart_meter
-                ? "myTNB currently identifies this account as a Standard Meter"
-                : "Daily data requires a Smart Meter (SMR)"}
+              {selectedAccount && !selectedAccount.is_smart_meter ? (
+                <>
+                  {selectedAccount.is_tagged_smr === null
+                    ? selectedAccount.eligibility_checked_at
+                      ? "The account list currently says Standard Meter; myTNB returned no SMR status for this account."
+                      : "The account list currently says Standard Meter; its SMR status has not been checked."
+                    : "The myTNB SMR status check does not tag this account as a Smart Meter."}{" "}
+                  <Link
+                    href="/settings#accounts"
+                    className="font-medium text-brand-700 underline"
+                  >
+                    Check meter status in Settings
+                  </Link>
+                  . Daily kWh readings are provided for accounts tagged as
+                  Smart Meter.
+                </>
+              ) : (
+                "Daily data requires available Smart Meter (SMR) readings. Sync this account to fetch them."
+              )}
             </p>
           </div>
         )}

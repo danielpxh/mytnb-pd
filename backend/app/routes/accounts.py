@@ -25,6 +25,7 @@ class AccountOut(BaseModel):
     nickname: str
     tariff_type: str
     is_smart_meter: bool
+    account_list_is_smart_meter: bool
     last_synced: str | None
     smr_eligibility: str | None = None
     is_tagged_smr: bool | None = None
@@ -32,6 +33,32 @@ class AccountOut(BaseModel):
     bill_owner_already_opt_in: bool | None = None
     bill_tenant_already_opt_in: bool | None = None
     eligibility_checked_at: str | None = None
+
+
+def _account_out(account: Account) -> AccountOut:
+    return AccountOut(
+        account_number=account.account_number,
+        owner_name=account.owner_name,
+        nickname=account.nickname or account.account_number,
+        tariff_type=account.tariff_type,
+        is_smart_meter=(
+            account.is_tagged_smr
+            if account.is_tagged_smr is not None
+            else account.is_smart_meter
+        ),
+        account_list_is_smart_meter=account.is_smart_meter,
+        last_synced=account.last_synced.isoformat() if account.last_synced else None,
+        smr_eligibility=account.smr_eligibility,
+        is_tagged_smr=account.is_tagged_smr,
+        bill_owner_over_rule=account.bill_owner_over_rule,
+        bill_owner_already_opt_in=account.bill_owner_already_opt_in,
+        bill_tenant_already_opt_in=account.bill_tenant_already_opt_in,
+        eligibility_checked_at=(
+            account.eligibility_checked_at.isoformat()
+            if account.eligibility_checked_at
+            else None
+        ),
+    )
 
 
 @router.get("", response_model=list[AccountOut])
@@ -44,27 +71,7 @@ async def list_accounts(
             select(Account).where(Account.owner_email == credentials.email)
         )
     ).all()
-    return [
-        AccountOut(
-            account_number=a.account_number,
-            owner_name=a.owner_name,
-            nickname=a.nickname or a.account_number,
-            tariff_type=a.tariff_type,
-            is_smart_meter=a.is_smart_meter,
-            last_synced=a.last_synced.isoformat() if a.last_synced else None,
-            smr_eligibility=a.smr_eligibility,
-            is_tagged_smr=a.is_tagged_smr,
-            bill_owner_over_rule=a.bill_owner_over_rule,
-            bill_owner_already_opt_in=a.bill_owner_already_opt_in,
-            bill_tenant_already_opt_in=a.bill_tenant_already_opt_in,
-            eligibility_checked_at=(
-                a.eligibility_checked_at.isoformat()
-                if a.eligibility_checked_at
-                else None
-            ),
-        )
-        for a in accounts
-    ]
+    return [_account_out(account) for account in accounts]
 
 
 @router.post("/discover")
@@ -158,8 +165,13 @@ async def check_eligibility(
             credentials.password,
         ) as client:
             linked_accounts = await client.get_customer_accounts()
-            if not any(item.account_number == account_number for item in linked_accounts):
+            linked_account = next(
+                (item for item in linked_accounts if item.account_number == account_number),
+                None,
+            )
+            if linked_account is None:
                 raise HTTPException(status_code=404, detail="Account not found")
+            account.is_smart_meter = linked_account.is_smart_meter
 
             user_info = client.credentials.user_info
             if user_info is None or not user_info.user_id:
@@ -216,17 +228,4 @@ async def check_eligibility(
     await session.commit()
     await session.refresh(account)
 
-    return AccountOut(
-        account_number=account.account_number,
-        owner_name=account.owner_name,
-        nickname=account.nickname or account.account_number,
-        tariff_type=account.tariff_type,
-        is_smart_meter=account.is_smart_meter,
-        last_synced=account.last_synced.isoformat() if account.last_synced else None,
-        smr_eligibility=account.smr_eligibility,
-        is_tagged_smr=account.is_tagged_smr,
-        bill_owner_over_rule=account.bill_owner_over_rule,
-        bill_owner_already_opt_in=account.bill_owner_already_opt_in,
-        bill_tenant_already_opt_in=account.bill_tenant_already_opt_in,
-        eligibility_checked_at=account.eligibility_checked_at.isoformat(),
-    )
+    return _account_out(account)

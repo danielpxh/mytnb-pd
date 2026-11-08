@@ -25,7 +25,12 @@ class FakeEligibilityClient:
         return False
 
     async def get_customer_accounts(self):
-        return [SimpleNamespace(account_number="220000000001")]
+        return [
+            SimpleNamespace(
+                account_number="220000000001",
+                is_smart_meter=False,
+            )
+        ]
 
     async def get_smr_accounts(self, account_numbers):
         return [
@@ -82,6 +87,8 @@ class EligibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.checked_user_id, "user-123")
         self.assertEqual(result.smr_eligibility, "Eligible")
         self.assertTrue(result.is_tagged_smr)
+        self.assertTrue(result.is_smart_meter)
+        self.assertFalse(result.account_list_is_smart_meter)
         self.assertFalse(result.bill_owner_over_rule)
         self.assertTrue(result.bill_owner_already_opt_in)
         self.assertFalse(result.bill_tenant_already_opt_in)

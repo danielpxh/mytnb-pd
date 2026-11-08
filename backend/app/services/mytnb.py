@@ -89,6 +89,11 @@ async def sync_account(
             ).first()
             if existing and existing.owner_email not in ("", owner_email):
                 raise AccountOwnershipError
+            smart_meter_status = (
+                existing.is_tagged_smr
+                if existing and existing.is_tagged_smr is not None
+                else acct_info.is_smart_meter
+            )
             if existing:
                 existing.owner_email = owner_email
                 existing.owner_name = acct_info.owner_name
@@ -124,7 +129,7 @@ async def sync_account(
             )
             due_date = account_due.due_date
 
-            if acct_info.is_smart_meter:
+            if smart_meter_status:
                 usage = await client.get_account_usage_smart(acct_info)
                 for week in usage.by_day:
                     for entry in week.days:

@@ -178,7 +178,7 @@ Check `is_smart_meter` in Settings to see your meter type.
 - Due date and current payment state come from the account due-amount endpoint. Historical bills are marked **Unknown** unless the source can identify their payment; unavailable data is not labeled unpaid.
 - Chart range selectors zoom the visible range. The data editor changes the chart in the current page only; edits are not saved to the database or sent to TNB. Chart and bill data can be exported as CSV, Excel, Word, or PDF files.
 - Dark/light theme selection is stored in browser local storage. The optional remembered email is also stored locally; the browser does not store the password.
-- Smart Meter Reading and bill-rendering indicators can be refreshed from **Settings → Your Accounts → Check eligibility**. Results are saved with the account in the local database and are informational; myTNB remains the authority for eligibility.
+- The account-list meter flag and the myTNB SMR-tag check are separate signals. **Settings → Your Accounts → Refresh SMR & eligibility** fetches both; when the SMR-tag response exists, the dashboard uses it for the meter badge and smart-meter usage sync, while showing the account-list value too if the sources disagree. Without an SMR-tag response, the dashboard falls back to the account-list flag. These results are informational; myTNB remains authoritative.
 
 ## Security and verification
 

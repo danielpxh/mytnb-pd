@@ -32,7 +32,17 @@ export function AccountSelector({ accounts, selected, onSelect }: Props) {
             >
               {a.nickname || a.account_number}
               {a.is_smart_meter && (
-                <span className="ml-1.5 text-xs text-green-600">●</span>
+                <span
+                  aria-label="Smart meter"
+                  title={
+                    a.is_tagged_smr === null
+                      ? "Smart meter according to the myTNB account list"
+                      : "Tagged as a smart meter by the myTNB SMR status check"
+                  }
+                  className="ml-1.5 text-xs text-green-600"
+                >
+                  ●
+                </span>
               )}
             </button>
           ))}
